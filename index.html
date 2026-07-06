@@ -5,6 +5,12 @@
 <title>MLB Model</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#F6F7F9">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MLB Model">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -168,6 +174,7 @@ select, input[type="text"] {
   width: 100%;
   aspect-ratio: 1 / 1;
   height: auto !important;
+  touch-action: none;   /* let Plotly own pinch/drag on the zoomable chart */
 }
 
 /* ==== Bottom nav ==== */
@@ -616,6 +623,7 @@ nav.bottom-nav button.active::before {
       </div>
       <div class="row">
         <button class="pill active" id="quad-toggle">Quadrant labels: On</button>
+        <button class="pill" id="scatter-reset">Reset zoom</button>
       </div>
     </div>
     <div class="card">
@@ -624,7 +632,7 @@ nav.bottom-nav button.active::before {
       </div>
       <div class="card-sub">z-scored contributions &middot; diagonal = iso-rating</div>
       <div id="plot-scatter" class="plot square-wrap"></div>
-      <div class="card-caption">Tap any dot for full breakdown</div>
+      <div class="card-caption">Pinch or drag a box to zoom &middot; double-tap to reset &middot; tap a dot to focus</div>
     </div>
   </section>
 
@@ -957,16 +965,17 @@ function lightenHex(hex, mix) {
   const lb = Math.round(b + (255 - b) * m);
   return '#' + [lr, lg, lb].map(v => v.toString(16).padStart(2, '0')).join('');
 }
-// Defense = full Tier 4 hue; Offense = same hue, mixed toward white.
-const FACTOR_DEF_COLORS = Object.assign({}, FACTOR_COLORS);
-const FACTOR_OFF_COLORS = {
+// Danny's call (2026-07-06, matches the NBA dashboard): darker = OFFENSE,
+// lighter = defense.
+const FACTOR_OFF_COLORS = Object.assign({}, FACTOR_COLORS);
+const FACTOR_DEF_COLORS = {
   BIP: lightenHex(FACTOR_COLORS.BIP, OFFENSE_TINT),
   HR:  lightenHex(FACTOR_COLORS.HR,  OFFENSE_TINT),
   BB:  lightenHex(FACTOR_COLORS.BB,  OFFENSE_TINT),
   K:   lightenHex(FACTOR_COLORS.K,   OFFENSE_TINT),
 };
 
-const DECOMP_SUB_SPLIT = 'Stacked contributions sum to ridge rating &middot; darker = defense, lighter = offense';
+const DECOMP_SUB_SPLIT = 'Stacked contributions sum to ridge rating &middot; darker = offense, lighter = defense';
 const DECOMP_SUB_NET   = 'Bars sum to ridge rating &middot; K &middot; BB &middot; HR &middot; BIP (net of off+def)';
 
 function renderDecomp() {
@@ -1108,16 +1117,21 @@ function renderScatter() {
     { x:-1.8, y:-2.4, text:'Low<br>Performers', showarrow:false, font:{color: MUTED, size: 10, family: "'Plus Jakarta Sans', sans-serif"} },
   ] : [];
 
+  // Zoom is ENABLED on this chart only (2026-07-06, matches NBA): pinch on
+  // touch, drag-a-box on desktop, double-tap resets, plus the Reset pill.
   const layout = Object.assign({}, COMMON_LAYOUT, {
+    dragmode: 'zoom',
     margin: { t: 10, b: 38, l: 38, r: 10 },
     xaxis: Object.assign({}, COMMON_AXIS, {
       range: [-3.2, 3.2],
+      fixedrange: false,
       zerolinecolor: SLATE_MID,
       gridcolor: 'transparent',
       title: { text: 'Off z-score', font: { color: GRAPHITE, size: 11, family: "'Plus Jakarta Sans', sans-serif" } },
     }),
     yaxis: Object.assign({}, COMMON_AXIS, {
       range: [-3.2, 3.2],
+      fixedrange: false,
       zerolinecolor: SLATE_MID,
       gridcolor: 'transparent',
       title: { text: 'Def z-score', font: { color: GRAPHITE, size: 11, family: "'Plus Jakarta Sans', sans-serif" } },
@@ -1127,7 +1141,12 @@ function renderScatter() {
     transition: { duration: 350 },
     autosize: true,
   });
-  Plotly.react('plot-scatter', [trace], layout, HARDEN);
+  const SCATTER_CFG = Object.assign({}, HARDEN, {
+    scrollZoom: true,
+    doubleClick: 'reset',
+    showAxisDragHandles: true,
+  });
+  Plotly.react('plot-scatter', [trace], layout, SCATTER_CFG);
   const gd = document.getElementById('plot-scatter');
   gd.on('plotly_click', e => {
     if (!e.points || !e.points.length) return;
@@ -1153,6 +1172,12 @@ document.getElementById('quad-toggle').addEventListener('click', e => {
   e.target.classList.toggle('active', QUAD_LABELS);
   e.target.textContent = 'Quadrant labels: ' + (QUAD_LABELS ? 'On' : 'Off');
   if (SCATTER_RENDERED) renderScatter();
+});
+document.getElementById('scatter-reset').addEventListener('click', () => {
+  if (!SCATTER_RENDERED) return;
+  Plotly.relayout('plot-scatter', {
+    'xaxis.range': [-3.2, 3.2], 'yaxis.range': [-3.2, 3.2],
+  });
 });
 
 // =====================================================================
@@ -1598,6 +1623,13 @@ document.querySelectorAll('[data-league]').forEach(p => p.addEventListener('clic
 document.getElementById('fcst-sort').addEventListener('change', e => { FCST_SORT_KEY = e.target.value; renderForecast(); });
 renderForecast();
 
+// PWA: register the service worker (relative path keeps the /MLB/ scope on
+// GitHub Pages). Registration failure is silent — the page works without it.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
