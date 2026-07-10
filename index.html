@@ -1523,9 +1523,17 @@ function betSignal(g) {
   }
   const ml = +fairML;
   const sign = ml > 0 ? '+' : '';
-  return '<div class="bet-signal">' + action +
-         ' &middot; Bet <span class="bet-signal-strong">' + team + '</span> at ' +
-         '<span class="bet-signal-strong">' + sign + ml + '</span> or better</div>';
+  // ALIGNMENT RULE (review 2026-07-10): flat edge-threshold picks did NOT
+  // beat the vig on 2022-26 out-of-sample closes in ANY month (-2.5% overall
+  // at the BET bar). The only validated bet signal is DOG EV+ (live-tracked
+  // +7.33u). Generic edges are shown as the model's lean, not betting advice.
+  const dogPlus = (g.underdog_ev_flag === true || g.underdog_ev_flag === 'TRUE');
+  if (dogPlus) {
+    return '<div class="bet-signal">DOG EV+ aligned &middot; Bet <span class="bet-signal-strong">' + team + '</span> at ' +
+           '<span class="bet-signal-strong">' + sign + ml + '</span> or better</div>';
+  }
+  return '<div class="bet-signal pass">Model lean: ' + team + ' (fair price ' + sign + ml +
+         ') — <b>not a bet</b>; flat-edge picks haven&rsquo;t beaten the vig historically. DOG EV+ is the only validated signal.</div>';
 }
 
 function renderSchedule() {
