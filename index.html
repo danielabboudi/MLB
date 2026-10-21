@@ -906,8 +906,8 @@ function renderRankings() {
 
   const hover = rows.map(r =>
     '<b>' + r.team + '</b><br>Rating ' + r.ridge_rating_dm.toFixed(3) +
-    '<br>K ' + r.net_K.toFixed(2) + ' &middot; BB ' + r.net_BB.toFixed(2) +
-    ' &middot; HR ' + r.net_HR.toFixed(2) + ' &middot; BIP ' + r.net_BIP.toFixed(2) +
+    '<br>K ' + r.net_K.toFixed(2) + ' \u00b7 BB ' + r.net_BB.toFixed(2) +
+    ' \u00b7 HR ' + r.net_HR.toFixed(2) + ' \u00b7 BIP ' + r.net_BIP.toFixed(2) +
     '<extra></extra>'
   );
 
@@ -949,7 +949,7 @@ function renderRankings() {
     renderRankings();
     if (SCATTER_RENDERED) renderScatter();
     if (TRAJ_RENDERED) renderTrajectory();
-    toast(t + ' &middot; ' + (RANK_HIGHLIGHT ? 'focused' : 'cleared'));
+    toast(t + ' \u00b7 ' + (RANK_HIGHLIGHT ? 'focused' : 'cleared'));
   });
 }
 document.getElementById('rank-highlight').addEventListener('change', e => {
@@ -1022,8 +1022,8 @@ const FACTOR_DEF_COLORS = {
   K:   lightenHex(FACTOR_COLORS.K,   OFFENSE_TINT),
 };
 
-const DECOMP_SUB_SPLIT = 'Stacked contributions sum to ridge rating &middot; darker = offense, lighter = defense';
-const DECOMP_SUB_NET   = 'Bars sum to ridge rating &middot; K &middot; BB &middot; HR &middot; BIP (net of off+def)';
+const DECOMP_SUB_SPLIT = 'Stacked contributions sum to ridge rating \u00b7 darker = offense, lighter = defense';
+const DECOMP_SUB_NET   = 'Bars sum to ridge rating \u00b7 K \u00b7 BB \u00b7 HR \u00b7 BIP (net of off+def)';
 
 function renderDecomp() {
   const rows = DATA.team_current.slice().sort((a,b) => a.ridge_rating_dm - b.ridge_rating_dm);
@@ -1039,7 +1039,7 @@ function renderDecomp() {
         y: teams, x: rows.map(r => r['net_'+f]),
         // 1.5px white stroke between stacked segments (Tier 4 chart Do/Don't)
         marker: { color: FACTOR_COLORS[f], line: { color: CANVAS, width: 1.5 } },
-        hovertemplate: rows.map(r => '<b>' + r.team + '</b> &middot; ' + f + '<br>contrib ' + r['net_'+f].toFixed(3) + '<extra></extra>'),
+        hovertemplate: rows.map(r => '<b>' + r.team + '</b> \u00b7 ' + f + '<br>contrib ' + r['net_'+f].toFixed(3) + '<extra></extra>'),
       });
     });
   } else {
@@ -1053,14 +1053,14 @@ function renderDecomp() {
         legendgroup: f,
         y: teams, x: rows.map(r => r['net_def_'+f]),
         marker: { color: FACTOR_DEF_COLORS[f], line: { color: CANVAS, width: 1.5 } },
-        hovertemplate: rows.map(r => '<b>' + r.team + '</b> &middot; ' + f + ' def<br>contrib ' + r['net_def_'+f].toFixed(3) + '<extra></extra>'),
+        hovertemplate: rows.map(r => '<b>' + r.team + '</b> \u00b7 ' + f + ' def<br>contrib ' + r['net_def_'+f].toFixed(3) + '<extra></extra>'),
       });
       traces.push({
         type: 'bar', orientation: 'h', name: f + ' off',
         legendgroup: f,
         y: teams, x: rows.map(r => r['net_off_'+f]),
         marker: { color: FACTOR_OFF_COLORS[f], line: { color: CANVAS, width: 1.5 } },
-        hovertemplate: rows.map(r => '<b>' + r.team + '</b> &middot; ' + f + ' off<br>contrib ' + r['net_off_'+f].toFixed(3) + '<extra></extra>'),
+        hovertemplate: rows.map(r => '<b>' + r.team + '</b> \u00b7 ' + f + ' off<br>contrib ' + r['net_off_'+f].toFixed(3) + '<extra></extra>'),
       });
     });
   }
@@ -1137,7 +1137,7 @@ function renderScatter() {
     textfont: { size: 9.5, color: rows.map(r => TC[r.team] || GRAPHITE), weight: 700, family: "'Plus Jakarta Sans', sans-serif" },
     hovertemplate: rows.map(r =>
       '<b>' + r.team + '</b><br>Rating ' + r.ridge_rating_dm.toFixed(3) +
-      '<br>Off z ' + r.o_zscore.toFixed(2) + ' &middot; Def z ' + r.d_zscore.toFixed(2) +
+      '<br>Off z ' + r.o_zscore.toFixed(2) + ' \u00b7 Def z ' + r.d_zscore.toFixed(2) +
       '<extra></extra>'
     ),
   };
@@ -1203,7 +1203,7 @@ function renderScatter() {
     RANK_HIGHLIGHT = SCATTER_HIGHLIGHT;
     renderScatter(); renderRankings();
     if (TRAJ_RENDERED) renderTrajectory();
-    toast(t + ' &middot; ' + (SCATTER_HIGHLIGHT ? 'focused' : 'cleared'));
+    toast(t + ' \u00b7 ' + (SCATTER_HIGHLIGHT ? 'focused' : 'cleared'));
   });
 }
 document.getElementById('scatter-highlight').addEventListener('change', e => {
@@ -1439,7 +1439,7 @@ function renderPitcherLine(name, fip, spq) {
     const cls = q > 0.05 ? 'pos' : (q < -0.05 ? 'neg' : 'zero');
     bits.push('<span class="sp-q ' + cls + '">sp ' + (q >= 0 ? '+' : '') + q.toFixed(2) + '</span>');
   }
-  const second = bits.length ? '<span class="sp-line">' + bits.join(' &middot; ') + '</span>' : '';
+  const second = bits.length ? '<span class="sp-line">' + bits.join(' \u00b7 ') + '</span>' : '';
   return top + second;
 }
 
@@ -1478,9 +1478,9 @@ function renderAttribution6(g) {
 
     let favCell;
     if (e.favors_side === 'home') {
-      favCell = '<div class="attr6-fav">&rarr; ' + (g.home_team || 'HOM') + '</div>';
+      favCell = '<div class="attr6-fav">\u2192 ' + (g.home_team || 'HOM') + '</div>';
     } else if (e.favors_side === 'away') {
-      favCell = '<div class="attr6-fav">&rarr; ' + (g.away_team || 'AWY') + '</div>';
+      favCell = '<div class="attr6-fav">\u2192 ' + (g.away_team || 'AWY') + '</div>';
     } else {
       favCell = '<div class="attr6-fav none">even</div>';
     }
@@ -1501,8 +1501,8 @@ function renderAttribution6(g) {
            '</div>' +
            rows +
            '<div class="attr6-axis-cap">' +
-             '<span>&larr; ' + (g.away_team || 'away') + ' favored</span>' +
-             '<span>' + (g.home_team || 'home') + ' favored &rarr;</span>' +
+             '<span>\u2190 ' + (g.away_team || 'away') + ' favored</span>' +
+             '<span>' + (g.home_team || 'home') + ' favored \u2192</span>' +
            '</div>' +
          '</div>';
 }
@@ -1538,7 +1538,7 @@ function edgeCallout(g) {
   }
   if (edgePts > 0) {
     return '<div class="edge-callout">Model gives <b>' + team + '</b> ' +
-           '<span class="edge-callout-num">' + (modelSideP * 100).toFixed(1) + '%</span> &middot; ' +
+           '<span class="edge-callout-num">' + (modelSideP * 100).toFixed(1) + '%</span> \u00b7 ' +
            'market only has them at ' + (mktSideP * 100).toFixed(1) + '% ' +
            '(<span class="edge-callout-num">+' + edgePts.toFixed(1) + '%</span> edge)</div>';
   }
@@ -1568,11 +1568,11 @@ function betSignal(g) {
   // +7.33u). Generic edges are shown as the model's lean, not betting advice.
   const dogPlus = (g.underdog_ev_flag === true || g.underdog_ev_flag === 'TRUE');
   if (dogPlus) {
-    return '<div class="bet-signal">DOG EV+ aligned &middot; Bet <span class="bet-signal-strong">' + team + '</span> at ' +
+    return '<div class="bet-signal">DOG EV+ aligned \u00b7 Bet <span class="bet-signal-strong">' + team + '</span> at ' +
            '<span class="bet-signal-strong">' + sign + ml + '</span> or better</div>';
   }
   return '<div class="bet-signal pass">Model lean: ' + team + ' (fair price ' + sign + ml +
-         ') — <b>not a bet</b>; flat-edge picks haven&rsquo;t beaten the vig historically. DOG EV+ is the only validated signal.</div>';
+         ') — <b>not a bet</b>; flat-edge picks haven\u2019t beaten the vig historically. DOG EV+ is the only validated signal.</div>';
 }
 
 function renderSchedule() {
@@ -1817,8 +1817,8 @@ function renderResults() {
         const color = CAT_HEX[d.color_token] || '#737C8C';
         const barStyle = c >= 0 ? 'left:50%; width:' + wPct + '%; background:' + color + ';'
                                : 'right:50%; width:' + wPct + '%; background:' + color + ';';
-        const fav = d.favors_side === 'home' ? '<div class="attr6-fav">&rarr; ' + g.home_team + '</div>'
-                  : d.favors_side === 'away' ? '<div class="attr6-fav">&rarr; ' + g.away_team + '</div>'
+        const fav = d.favors_side === 'home' ? '<div class="attr6-fav">\u2192 ' + g.home_team + '</div>'
+                  : d.favors_side === 'away' ? '<div class="attr6-fav">\u2192 ' + g.away_team + '</div>'
                   : '<div class="attr6-fav none">as expected</div>';
         return '<div class="attr6-row">' +
                  '<div class="attr6-label"><span class="attr6-sw" style="background:' + color + '"></span>' + d.label +
@@ -1830,7 +1830,7 @@ function renderResults() {
         '<div class="attr6-head"><span class="slash"></span>What drove it — surprise vs expectation</div>' +
         '<div class="attr6-sub">Each family’s actual net runs minus what the two teams’ form implied. Bars toward a side = that team out-performed expectations there. Starter/bullpen effects show up inside these families.</div>' +
         rows +
-        '<div class="attr6-axis-cap"><span>&larr; ' + g.away_team + ' beat expectation</span><span>' + g.home_team + ' beat expectation &rarr;</span></div></div>';
+        '<div class="attr6-axis-cap"><span>\u2190 ' + g.away_team + ' beat expectation</span><span>' + g.home_team + ' beat expectation \u2192</span></div></div>';
     }
     const mv = g.rating_move || {};
     const moveRow = t => {
@@ -1838,7 +1838,7 @@ function renderResults() {
       if (!m) return '';
       const up = +m.delta >= 0;
       return '<div class="kv"><span class="k">' + t + ' rating</span><span class="v">' +
-             (+m.before).toFixed(2) + ' &rarr; ' + (+m.after).toFixed(2) +
+             (+m.before).toFixed(2) + ' \u2192 ' + (+m.after).toFixed(2) +
              ' <b style="color:' + (up ? 'var(--green-t)' : 'var(--amber-t)') + '">(' +
              (up ? '+' : '') + (+m.delta).toFixed(3) + ')</b></span></div>';
     };
